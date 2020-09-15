@@ -1,17 +1,18 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy } from "@angular/core";
 
-import { Subscription } from 'rxjs';
+import { Subscription } from "rxjs";
 
-import { Product } from '../product';
-import { ProductService } from '../product.service';
+import { Product } from "../product";
+import { ProductService } from "../product.service";
+import { Store } from "@ngrx/store";
 
 @Component({
-  selector: 'app-product-list',
-  templateUrl: './product-list.component.html',
-  styleUrls: ['./product-list.component.css']
+  selector: "app-product-list",
+  templateUrl: "./product-list.component.html",
+  styleUrls: ["./product-list.component.css"],
 })
 export class ProductListComponent implements OnInit, OnDestroy {
-  pageTitle = 'Products';
+  pageTitle = "Products";
   errorMessage: string;
 
   displayCode: boolean;
@@ -22,16 +23,25 @@ export class ProductListComponent implements OnInit, OnDestroy {
   selectedProduct: Product | null;
   sub: Subscription;
 
-  constructor(private productService: ProductService) { }
+  constructor(
+    private store: Store<any>,
+    private productService: ProductService
+  ) {}
 
   ngOnInit(): void {
     this.sub = this.productService.selectedProductChanges$.subscribe(
-      currentProduct => this.selectedProduct = currentProduct
+      (currentProduct) => (this.selectedProduct = currentProduct)
     );
 
     this.productService.getProducts().subscribe({
-      next: (products: Product[]) => this.products = products,
-      error: err => this.errorMessage = err
+      next: (products: Product[]) => (this.products = products),
+      error: (err) => (this.errorMessage = err),
+    });
+
+    this.store.select("products").subscribe((products) => {
+      if (products) {
+        this.displayCode = products.showProductCode;
+      }
     });
   }
 
@@ -40,7 +50,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
   }
 
   checkChanged(): void {
-    this.displayCode = !this.displayCode;
+    this.store.dispatch({ type: "[Product] Toggle product code" });
   }
 
   newProduct(): void {
@@ -50,5 +60,4 @@ export class ProductListComponent implements OnInit, OnDestroy {
   productSelected(product: Product): void {
     this.productService.changeSelectedProduct(product);
   }
-
 }
